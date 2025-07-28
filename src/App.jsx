@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast, { Toaster } from 'react-hot-toast';
 
 const formats = [
   {
@@ -101,9 +102,12 @@ export default function App() {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(output);
+    toast.success("Text Copied");
   };
 
   return (
+    <>
+    <Toaster/>
     <div className="max-w-2xl mx-auto p-6 bg-white shadow-2xl rounded-2xl mt-8 space-y-6">
       <h1 className="text-2xl font-bold mb-4 text-center">Feedback Mail Generator</h1>
       <div className="flex space-x-2 justify-center mb-6">
@@ -165,7 +169,7 @@ export default function App() {
         ))}
         <button
           type="submit"
-          className="bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 w-full mt-2"
+          className="cursor-pointer bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 w-full mt-2"
         >
           Generate Feedback
         </button>
@@ -175,7 +179,7 @@ export default function App() {
           <div className="font-semibold mb-2">Formatted Feedback Output:</div>
           <pre className="whitespace-pre-wrap font-mono text-sm">{output}</pre>
           <button
-            className="mt-2 px-4 py-2 bg-green-500 text-white rounded-xl font-semibold shadow hover:bg-green-600"
+            className="cursor-pointer mt-2 px-4 py-2 bg-green-500 text-white rounded-xl font-semibold shadow hover:bg-green-600"
             onClick={handleCopy}
           >
             Copy Output
@@ -183,5 +187,7 @@ export default function App() {
         </div>
       )}
     </div>
+    </>
+    
   );
 }
