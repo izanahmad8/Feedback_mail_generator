@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { Analytics } from '@vercel/analytics/react';
 import toast, { Toaster } from 'react-hot-toast';
 
 const formats = [
@@ -108,6 +109,7 @@ export default function App() {
   return (
     <>
     <Toaster/>
+    <Analytics />
     <div className="max-w-2xl mx-auto p-6 bg-white shadow-2xl rounded-2xl mt-8 space-y-6">
       <h1 className="text-2xl font-bold mb-4 text-center">Feedback Mail Generator</h1>
       <div className="flex space-x-2 justify-center mb-6">
