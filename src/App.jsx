@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import toast, { Toaster } from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
-import Gemini from "./Gemini";
+import {analyzeFeedbackWithGemini} from "./Gemini";
+import FeedbackQualityMeter from "./FeedbackQualityMeter";
 
 const formats = [
   {
@@ -92,9 +93,9 @@ ${values.feedback || ""}
 
 **Interview Questions Asked:**  
 ${values.questions
-        ?.split("\n")
-        .map((q, i) => (q.trim() ? `${i + 1}. ${q.trim()}` : ""))
-        .join("\n")}`;
+  ?.split("\n")
+  .map((q, i) => (q.trim() ? `${i + 1}. ${q.trim()}` : ""))
+  .join("\n")}`;
     case "Mock Interview":
       return `**Task Status:** ${values.taskStatus || ""}  
 **Feedback:**  
@@ -102,9 +103,9 @@ ${values.feedback || ""}
 
 **Mock Interview Questions:**  
 ${values.questions
-        ?.split("\n")
-        .map((q, i) => (q.trim() ? `${i + 1}. ${q.trim()}` : ""))
-        .join("\n")}`;
+  ?.split("\n")
+  .map((q, i) => (q.trim() ? `${i + 1}. ${q.trim()}` : ""))
+  .join("\n")}`;
     case "Resume Understanding":
       return `**Task Status:** ${values.taskStatus || ""}  
 **Feedback:**  
@@ -119,11 +120,11 @@ ${values.feedback || ""}`;
   }
 }
 
-
 export default function App() {
   const [selectedFormat, setSelectedFormat] = useState("Interview");
   const [fieldValues, setFieldValues] = useState({});
   const [output, setOutput] = useState("");
+  const [geminiResult, setGeminiResult] = useState(null);
   const outputRef = useRef(null);
 
   const current = formats.find((f) => f.name === selectedFormat);
@@ -132,8 +133,13 @@ export default function App() {
     setFieldValues((v) => ({ ...v, [key]: value }));
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async() => {
     setOutput(formatOutput(selectedFormat, fieldValues));
+    setGeminiResult(null);
+    if(fieldValues.feedback){
+      const result = await analyzeFeedbackWithGemini(fieldValues.feedback);
+      setGeminiResult(result);
+    }
   };
 
   // Copy as rich HTML if supported, fallback to Markdown text
@@ -181,9 +187,9 @@ export default function App() {
         </div>
         <form
           className="space-y-4"
-          onSubmit={(e) => {
+          onSubmit={async(e) => {
             e.preventDefault();
-            handleGenerate();
+            await handleGenerate();
           }}
         >
           {current.fields.map((field) => (
@@ -204,13 +210,29 @@ export default function App() {
                   ))}
                 </select>
               ) : field.type === "textarea" ? (
-                <textarea
-                  className="w-full rounded-xl border border-gray-400 p-2 min-h-[60px] focus:ring-2 focus:ring-blue-300"
-                  value={fieldValues[field.key] || ""}
-                  onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                  placeholder={`Enter ${field.label.toLowerCase()}`}
-                  required
-                />
+                <>
+                  <textarea
+                    className="w-full rounded-xl border border-gray-400 p-2 min-h-[60px] focus:ring-2 focus:ring-blue-300"
+                    value={fieldValues[field.key] || ""}
+                    onChange={(e) =>
+                      handleFieldChange(field.key, e.target.value)
+                    }
+                    placeholder={`Enter ${field.label.toLowerCase()}`}
+                    required
+                  />
+                  {field.key === "feedback" && (
+                    <>
+                      {geminiResult?.Quality && (
+                        <FeedbackQualityMeter quality={geminiResult.Quality} />
+                      )}
+                      {geminiResult?.Reason && (
+                        <div className="mt-1 mb-2 rounded bg-blue-50 border border-blue-200 p-2 text-xs text-blue-900">
+                          <strong>Why?</strong> {geminiResult.Reason}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
               ) : (
                 <input
                   className="w-full rounded-xl border border-gray-400 p-2 focus:ring-2 focus:ring-blue-300"
@@ -245,10 +267,10 @@ export default function App() {
             >
               Copy Output
             </button>
-            <Gemini feedback={fieldValues.feedback}/>
           </div>
         )}
       </div>
+      {/* <Gemini feedback={fieldValues.feedback} onResult={setGeminiResult} /> */}
     </>
   );
 }
