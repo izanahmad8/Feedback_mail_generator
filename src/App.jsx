@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import toast, { Toaster } from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
-import {analyzeFeedbackWithGemini} from "./Gemini";
+import { analyzeFeedbackWithGemini } from "./Gemini";
 import FeedbackQualityMeter from "./FeedbackQualityMeter";
 
 const formats = [
@@ -28,13 +28,22 @@ const formats = [
           "Final",
           "HR",
           "Loop",
+          "AI Interview",
         ],
       },
-      { key: "feedback", label: "Feedback", type: "textarea" },
+      {
+        key: "feedback",
+        label: "Feedback",
+        type: "textarea",
+        placeholder:
+          "Brief on the candidate's performance: answer quality, communication, confidence, possibility of moving to next round. If cancelled/not done, state reason – e.g., no show, cancellation, etc.",
+      },
       {
         key: "questions",
         label: "Interview Questions Asked",
         type: "textarea",
+        placeholder:
+          "List the questions asked in the interview (if AI-generated, ensure review before sharing).",
       },
     ],
   },
@@ -47,8 +56,20 @@ const formats = [
         type: "select",
         options: ["Completed", "Not Done", "Cancelled"],
       },
-      { key: "feedback", label: "Feedback", type: "textarea" },
-      { key: "questions", label: "Mock Interview Questions", type: "textarea" },
+      {
+        key: "feedback",
+        label: "Feedback",
+        type: "textarea",
+        placeholder:
+          "Comments on candidate behavior, technical/soft skills, communication ability, and key improvement areas.",
+      },
+      {
+        key: "questions",
+        label: "Mock Interview Questions",
+        type: "textarea",
+        placeholder:
+          "List of questions asked during the session (ensure validity if auto-generated).",
+      },
     ],
   },
   {
@@ -60,7 +81,13 @@ const formats = [
         type: "select",
         options: ["Completed", "Not Done", "Cancelled"],
       },
-      { key: "feedback", label: "Feedback", type: "textarea" },
+      {
+        key: "feedback",
+        label: "Feedback",
+        type: "textarea",
+        placeholder:
+          "Notes or remarks based on resume analysis – skill highlights, gaps, relevant experience, or inconsistencies.",
+      },
     ],
   },
   {
@@ -78,7 +105,13 @@ const formats = [
         type: "select",
         options: ["Behavioral", "Technical"],
       },
-      { key: "feedback", label: "Feedback", type: "textarea" },
+      {
+        key: "feedback",
+        label: "Feedback",
+        type: "textarea",
+        placeholder:
+          "Briefly describe the assessment — e.g., coding challenge (JavaScript array manipulations), behavioral test (situational judgment), case study, multiple-choice test, etc. Was the assessment completed end-to-end? Any sections that were complex or required extra effort. If applicable, mention whether any instructions from the candidate/client were followed.",
+      },
     ],
   },
 ];
@@ -133,10 +166,10 @@ export default function App() {
     setFieldValues((v) => ({ ...v, [key]: value }));
   };
 
-  const handleGenerate = async() => {
+  const handleGenerate = async () => {
     setOutput(formatOutput(selectedFormat, fieldValues));
     setGeminiResult(null);
-    if(fieldValues.feedback){
+    if (fieldValues.feedback) {
       const result = await analyzeFeedbackWithGemini(fieldValues.feedback);
       setGeminiResult(result);
     }
@@ -187,7 +220,7 @@ export default function App() {
         </div>
         <form
           className="space-y-4"
-          onSubmit={async(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             await handleGenerate();
           }}
@@ -217,7 +250,9 @@ export default function App() {
                     onChange={(e) =>
                       handleFieldChange(field.key, e.target.value)
                     }
-                    placeholder={`Enter ${field.label.toLowerCase()}`}
+                    placeholder={`Enter ${field.placeholder}`}
+                    rows="5"
+                    cols="40"
                     required
                   />
                   {field.key === "feedback" && (
@@ -239,7 +274,7 @@ export default function App() {
                   type="text"
                   value={fieldValues[field.key] || ""}
                   onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                  placeholder={`Enter ${field.label.toLowerCase()}`}
+                  placeholder={`Enter ${field.placeholder}`}
                   required
                 />
               )}
