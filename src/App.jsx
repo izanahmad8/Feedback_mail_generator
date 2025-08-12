@@ -195,7 +195,7 @@ export default function App() {
     <>
       <Toaster />
       <Analytics />
-      <div className="max-w-2xl mx-auto p-6 bg-white shadow-2xl rounded-2xl mt-8 space-y-6">
+      <div className="max-w-2xl mx-auto p-6 bg-[#FCF7F8] shadow-2xl rounded-2xl mt-8 space-y-6">
         <h1 className="text-2xl font-bold mb-4 text-center">
           Feedback Mail Generator
         </h1>
@@ -205,7 +205,7 @@ export default function App() {
               key={f.name}
               className={`px-4 py-2 rounded-xl font-semibold shadow ${
                 selectedFormat === f.name
-                  ? "bg-blue-600 text-white"
+                  ? "bg-[#0691FF] text-white"
                   : "bg-gray-100 hover:bg-blue-100"
               }`}
               onClick={() => {
@@ -282,7 +282,7 @@ export default function App() {
           ))}
           <button
             type="submit"
-            className="cursor-pointer bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 w-full mt-2"
+            className="cursor-pointer bg-[#0691FF]  text-white px-6 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 w-full mt-2"
           >
             Generate Feedback
           </button>
