@@ -1,10 +1,146 @@
-import { useState, useRef } from "react";
+import { useState, useRef, Fragment } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import toast, { Toaster } from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import { analyzeFeedbackWithGemini } from "./Gemini";
 import FeedbackQualityMeter from "./FeedbackQualityMeter";
+import { motion } from "framer-motion";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+  Transition,
+} from "@headlessui/react";
 
+/* -------------------------------------------
+   CustomSelect (Headless UI Listbox)
+------------------------------------------- */
+function CustomSelect({
+  value,
+  onChange,
+  options = [],
+  placeholder = "Select",
+}) {
+  return (
+    <Listbox value={value || ""} onChange={onChange}>
+      {({ open }) => (
+        <div className="relative">
+          <ListboxButton
+            className={`w-full rounded-2xl border border-slate-300 bg-white p-3 text-left text-slate-900 shadow-sm transition focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400 flex items-center justify-between ${
+              value ? "" : "text-slate-400"
+            }`}
+          >
+            <span>{value || placeholder}</span>
+            {/* Chevron */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className={`h-5 w-5 transition-transform ${
+                open ? "rotate-180" : "rotate-0"
+              }`}
+            >
+              <path d="M6.75 9l5.25 5.25L17.25 9" />
+            </svg>
+          </ListboxButton>
+
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="opacity-0 -translate-y-1"
+            enterTo="opacity-100 translate-y-0"
+            leave="transition ease-in duration-75"
+            leaveFrom="opacity-100 translate-y-0"
+            leaveTo="opacity-0 -translate-y-1"
+          >
+            <ListboxOptions className="absolute z-20 mt-2 max-h-60 w-full overflow-auto custom-scroll rounded-2xl border border-slate-200 bg-white py-1 shadow-2xl focus:outline-none">
+              {/* Placeholder row */}
+              <ListboxOption
+                key="__placeholder"
+                value=""
+                className={({ focus }) =>
+                  `relative cursor-pointer select-none px-4 py-2 text-sm ${
+                    focus ? "bg-blue-50 text-blue-700" : "text-slate-700"
+                  }`
+                }
+              >
+                {({ selected }) => (
+                  <div className="flex items-center gap-2">
+                    {selected ? (
+                      <svg
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      >
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <span className="inline-block h-4 w-4" />
+                    )}
+                    <span className="truncate">{placeholder}</span>
+                  </div>
+                )}
+              </ListboxOption>
+
+              {options.map((opt) => (
+                <ListboxOption
+                  key={opt}
+                  value={opt}
+                  className={({ active }) =>
+                    `relative cursor-pointer select-none px-4 py-2 text-sm ${
+                      active ? "bg-blue-50 text-blue-700" : "text-slate-700"
+                    }`
+                  }
+                >
+                  {({ selected }) => (
+                    <div className="flex items-center gap-2">
+                      {selected ? (
+                        <svg
+                          className="h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                        >
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <span className="inline-block h-4 w-4" />
+                      )}
+                      <span
+                        className={`truncate ${
+                          selected ? "font-semibold" : ""
+                        }`}
+                      >
+                        {opt}
+                      </span>
+                    </div>
+                  )}
+                </ListboxOption>
+              ))}
+            </ListboxOptions>
+          </Transition>
+
+          {/* Hidden input to preserve native form 'required' behavior */}
+          <input
+            tabIndex={-1}
+            className="sr-only"
+            value={value || ""}
+            onChange={() => {}}
+            required
+          />
+        </div>
+      )}
+    </Listbox>
+  );
+}
+
+/* -------------------------------------------
+   Formats config (unchanged)
+------------------------------------------- */
 const formats = [
   {
     name: "Interview",
@@ -103,7 +239,7 @@ const formats = [
         key: "assessmentType",
         label: "Assessment Type",
         type: "select",
-        options: ["Behavioral", "Technical"],
+        options: ["Behavioral", "Technical", "Behavioral/Technical"],
       },
       {
         key: "feedback",
@@ -116,6 +252,9 @@ const formats = [
   },
 ];
 
+/* -------------------------------------------
+   Output formatter (unchanged)
+------------------------------------------- */
 function formatOutput(selected, values) {
   switch (selected) {
     case "Interview":
@@ -153,6 +292,9 @@ ${values.feedback || ""}`;
   }
 }
 
+/* -------------------------------------------
+   App Component
+------------------------------------------- */
 export default function App() {
   const [selectedFormat, setSelectedFormat] = useState("Interview");
   const [fieldValues, setFieldValues] = useState({});
@@ -175,7 +317,6 @@ export default function App() {
     }
   };
 
-  // Copy as rich HTML if supported, fallback to Markdown text
   const handleCopy = () => {
     if (outputRef.current) {
       const html = outputRef.current.innerHTML;
@@ -195,117 +336,182 @@ export default function App() {
     <>
       <Toaster />
       <Analytics />
-      <div className="max-w-2xl mx-auto p-6 bg-[#FCF7F8] shadow-2xl rounded-2xl mt-8 space-y-6">
-        <h1 className="text-2xl font-bold mb-4 text-center">
-          Feedback Mail Generator
-        </h1>
-        <div className="flex space-x-2 justify-center mb-6">
-          {formats.map((f) => (
-            <button
-              key={f.name}
-              className={`px-4 py-2 rounded-xl font-semibold shadow ${
-                selectedFormat === f.name
-                  ? "bg-[#0691FF] text-white"
-                  : "bg-gray-100 hover:bg-blue-100"
-              }`}
-              onClick={() => {
-                setSelectedFormat(f.name);
-                setFieldValues({});
-                setOutput("");
-              }}
-            >
-              {f.name}
-            </button>
-          ))}
-        </div>
-        <form
-          className="space-y-4"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            await handleGenerate();
-          }}
-        >
-          {current.fields.map((field) => (
-            <div key={field.key}>
-              <label className="block font-semibold mb-1">{field.label}:</label>
-              {field.type === "select" ? (
-                <select
-                  className="w-full rounded-xl border border-gray-400 p-2 focus:ring-2 focus:ring-blue-300"
-                  value={fieldValues[field.key] || ""}
-                  onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                  required
-                >
-                  <option value="">Select</option>
-                  {field.options.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              ) : field.type === "textarea" ? (
-                <>
-                  <textarea
-                    className="w-full rounded-xl border border-gray-400 p-2 min-h-[60px] focus:ring-2 focus:ring-blue-300"
-                    value={fieldValues[field.key] || ""}
-                    onChange={(e) =>
-                      handleFieldChange(field.key, e.target.value)
-                    }
-                    placeholder={`Enter ${field.placeholder}`}
-                    rows="5"
-                    cols="40"
-                    required
-                  />
-                  {field.key === "feedback" && (
-                    <>
-                      {geminiResult?.Quality && (
-                        <FeedbackQualityMeter quality={geminiResult.Quality} />
-                      )}
-                      {geminiResult?.Reason && (
-                        <div className="mt-1 mb-2 rounded bg-blue-50 border border-blue-200 p-2 text-xs text-blue-900">
-                          <strong>Why?</strong> {geminiResult.Reason}
+
+      {/* Page Background */}
+      <div className="min-h-screen w-full bg-gradient-to-br from-[#f8fbff] via-[#f5f7fb] to-[#eef2f7] selection:bg-blue-200/60 selection:text-blue-950">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+          {/* App Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="relative rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200/70 bg-white/80 backdrop-blur-md"
+          >
+            {/* Accent Glow */}
+            <div className="pointer-events-none absolute -inset-0.5 rounded-[28px] bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 blur-2xl" />
+
+            <div className="relative">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
+                  Feedback Mail Generator
+                </h1>
+                <p className="mt-2 text-sm text-slate-600">
+                  Create clean, structured feedback in seconds. Paste, pick, and
+                  go.
+                </p>
+              </div>
+
+              {/* Format Switcher */}
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-6">
+                {formats.map((f) => (
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    key={f.name}
+                    className={`group relative px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold shadow-sm border transition-all ${
+                      selectedFormat === f.name
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-transparent"
+                        : "bg-white text-slate-700 hover:text-blue-700 border-slate-200 hover:border-blue-200 hover:shadow-md"
+                    }`}
+                    onClick={() => {
+                      setSelectedFormat(f.name);
+                      setFieldValues({});
+                      setOutput("");
+                    }}
+                  >
+                    <span className="pr-0.5">{f.name}</span>
+                    {selectedFormat === f.name && (
+                      <span className="ml-2 inline-block h-2 w-2 rounded-full bg-white/90 shadow" />
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* Form */}
+              <form
+                className="space-y-5"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  await handleGenerate();
+                }}
+              >
+                {current.fields.map((field) => (
+                  <div key={field.key} className="group">
+                    <label className="block font-semibold mb-1.5 text-slate-800">
+                      {field.label}
+                    </label>
+
+                    {field.type === "select" ? (
+                      <CustomSelect
+                        value={fieldValues[field.key] || ""}
+                        onChange={(val) => handleFieldChange(field.key, val)}
+                        options={field.options || []}
+                        placeholder="Select"
+                      />
+                    ) : field.type === "textarea" ? (
+                      <>
+                        <textarea
+                          className="w-full rounded-2xl border border-slate-300 bg-white p-3 min-h-[100px] text-slate-900 shadow-sm transition focus:ring-4 focus:ring-blue-200 focus:border-blue-400 outline-none placeholder:text-slate-400"
+                          value={fieldValues[field.key] || ""}
+                          onChange={(e) =>
+                            handleFieldChange(field.key, e.target.value)
+                          }
+                          placeholder={`Enter ${field.placeholder}`}
+                          rows={5}
+                          cols={40}
+                          required
+                        />
+                        <div className="mt-1 text-xs text-slate-500">
+                          Tip: Use line breaks to add multiple items.
                         </div>
-                      )}
-                    </>
-                  )}
-                </>
-              ) : (
-                <input
-                  className="w-full rounded-xl border border-gray-400 p-2 focus:ring-2 focus:ring-blue-300"
-                  type="text"
-                  value={fieldValues[field.key] || ""}
-                  onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                  placeholder={`Enter ${field.placeholder}`}
-                  required
-                />
+
+                        {field.key === "feedback" && (
+                          <div className="mt-2 space-y-2">
+                            {geminiResult?.Quality && (
+                              <FeedbackQualityMeter
+                                quality={geminiResult.Quality}
+                              />
+                            )}
+                            {geminiResult?.Reason && (
+                              <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900">
+                                <strong className="font-semibold">Why?</strong>{" "}
+                                {geminiResult.Reason}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <input
+                        className="w-full rounded-2xl border border-slate-300 bg-white p-3 text-slate-900 shadow-sm transition focus:ring-4 focus:ring-blue-200 focus:border-blue-400 outline-none placeholder:text-slate-400"
+                        type="text"
+                        value={fieldValues[field.key] || ""}
+                        onChange={(e) =>
+                          handleFieldChange(field.key, e.target.value)
+                        }
+                        placeholder={`Enter ${field.placeholder}`}
+                        required
+                        aria-label={field.label}
+                      />
+                    )}
+                  </div>
+                ))}
+
+                <motion.button
+                  whileHover={{ y: -1 }}
+                  whileTap={{ y: 0 }}
+                  type="submit"
+                  className="cursor-pointer relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl w-full mt-2 focus:outline-none focus:ring-4 focus:ring-blue-200"
+                >
+                  <span className="relative z-10">Generate Feedback</span>
+                  <span className="absolute inset-0 opacity-0 hover:opacity-20 transition bg-white" />
+                </motion.button>
+              </form>
+
+              {/* Output */}
+              {output && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white/90 rounded-2xl p-4 mt-6 border border-slate-200 shadow-inner"
+                >
+                  <div className="font-semibold mb-2 text-slate-800">
+                    Formatted Feedback Output
+                  </div>
+                  <div
+                    className="whitespace-pre-wrap font-mono text-[13px] leading-6 text-slate-800 max-h-72 overflow-y-auto pr-1 custom-scroll"
+                    ref={outputRef}
+                  >
+                    <ReactMarkdown>{output}</ReactMarkdown>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      className="cursor-pointer px-4 py-2 bg-emerald-500 text-white rounded-xl font-semibold shadow hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-200"
+                      onClick={handleCopy}
+                    >
+                      Copy Output
+                    </motion.button>
+
+                    <button
+                      type="button"
+                      className="px-4 py-2 rounded-xl font-semibold border border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:text-blue-700 hover:shadow-md transition"
+                      onClick={() =>
+                        toast("You can paste this directly into email.")
+                      }
+                    >
+                      How to use
+                    </button>
+                  </div>
+                </motion.div>
               )}
             </div>
-          ))}
-          <button
-            type="submit"
-            className="cursor-pointer bg-[#0691FF]  text-white px-6 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 w-full mt-2"
-          >
-            Generate Feedback
-          </button>
-        </form>
-        {output && (
-          <div className="bg-gray-50 rounded-xl p-4 mt-4 border border-gray-200">
-            <div className="font-semibold mb-2">Formatted Feedback Output:</div>
-            <div
-              className="whitespace-pre-wrap font-mono text-sm"
-              ref={outputRef}
-            >
-              <ReactMarkdown>{output}</ReactMarkdown>
-            </div>
-            <button
-              className="cursor-pointer mt-2 px-4 py-2 bg-green-500 text-white rounded-xl font-semibold shadow hover:bg-green-600"
-              onClick={handleCopy}
-            >
-              Copy Output
-            </button>
-          </div>
-        )}
+          </motion.div>
+        </div>
       </div>
-      {/* <Gemini feedback={fieldValues.feedback} onResult={setGeminiResult} /> */}
     </>
   );
 }

@@ -1,2 +1,79 @@
 @import "tailwindcss";
 
+/* Custom Scrollbar Styles – matches soft, rounded UI look */
+.custom-scroll::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(59, 130, 246, 0.4),   /* Tailwind blue-500 @ 40% */
+    rgba(99, 102, 241, 0.4)    /* Tailwind indigo-500 @ 40% */
+  );
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease-in-out;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    rgba(59, 130, 246, 0.6),
+    rgba(99, 102, 241, 0.6)
+  );
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox */
+.custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.4) transparent;
+}
+
+html, body {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59,130,246,.4) transparent;
+}
+
+/* Chrome/Edge/Safari */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom,
+    rgba(59,130,246,.4),   /* blue-500 40% */
+    rgba(99,102,241,.4)    /* indigo-500 40% */
+  );
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom,
+    rgba(59,130,246,.6),
+    rgba(99,102,241,.6)
+  );
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner {
+  background: transparent;
+}
