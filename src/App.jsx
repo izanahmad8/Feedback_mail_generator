@@ -12,6 +12,7 @@ import {
   ListboxOptions,
   Transition,
 } from "@headlessui/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 /* -------------------------------------------
    CustomSelect (Headless UI Listbox)
@@ -336,6 +337,7 @@ export default function App() {
     <>
       <Toaster />
       <Analytics />
+      <SpeedInsights />
 
       {/* Page Background */}
       <div className="min-h-screen w-full bg-gradient-to-br from-[#f8fbff] via-[#f5f7fb] to-[#eef2f7] selection:bg-blue-200/60 selection:text-blue-950">
