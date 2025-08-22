@@ -158,14 +158,16 @@ const formats = [
         type: "select",
         options: [
           "Screening",
-          "1st",
-          "2nd",
-          "Technical",
-          "Managerial",
-          "Final",
-          "HR",
-          "Loop",
-          "AI Interview",
+          "On Demand or AI Interview",
+          "1st Round",
+          "2nd Round",
+          "3rd Round",
+          "4th Round",
+          "5th Round",
+          "Technical Round",
+          "Coding Round",
+          "Final Round",
+          "Loop Round",
         ],
       },
       {
@@ -453,7 +455,6 @@ export default function App() {
                           handleFieldChange(field.key, e.target.value)
                         }
                         placeholder={`Enter ${field.placeholder}`}
-                        required
                         aria-label={field.label}
                       />
                     )}
