@@ -424,7 +424,7 @@ export default function App() {
                           placeholder={`Enter ${field.placeholder}`}
                           rows={5}
                           cols={40}
-                          required
+                          required={field.label !== "Interview Questions Asked"}
                         />
                         <div className="mt-1 text-xs text-slate-500">
                           Tip: Use line breaks to add multiple items.
@@ -454,6 +454,7 @@ export default function App() {
                         onChange={(e) =>
                           handleFieldChange(field.key, e.target.value)
                         }
+                        required
                         placeholder={`Enter ${field.placeholder}`}
                         aria-label={field.label}
                       />
